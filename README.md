@@ -7,5 +7,6 @@
 предполагается награда\штраф. 
 
 # Архитектура
-![image](https://github.com/wanna-beat-by-bit/lifeChallengeBot/assets/71206074/c1b8f84d-1250-4a59-908d-76a36ec0f586)
+![image](https://github.com/wanna-beat-by-bit/lifeChallengeBot/assets/71206074/2933a5f8-f9db-4357-adff-925e71f2505c)
+
 
