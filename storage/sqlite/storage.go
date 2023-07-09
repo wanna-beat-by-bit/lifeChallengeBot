@@ -17,7 +17,7 @@ type Storage struct {
 func NewStorage(path string) (storage.Storage, error) {
 	db, err := sql.Open("sqlite3", path)
 	if err != nil {
-		return nil, fmt.Errorf("Can't find database: %s", err.Error())
+		return nil, fmt.Errorf("can't find database: %s", err.Error())
 	}
 
 	if err := db.Ping(); err != nil {
@@ -31,22 +31,22 @@ func NewStorage(path string) (storage.Storage, error) {
 }
 
 func (d *Storage) Init(ctx context.Context) error {
-	query := `create table if not exists missions(id integer primary key, text TEXT, deadline text)`
+	query := `create table if not exists missions(id string primary key, text TEXT, deadline text)`
 
 	_, err := d.db.ExecContext(ctx, query)
 	if err != nil {
-		return fmt.Errorf("Can't create database: %s", err.Error())
+		return fmt.Errorf("can't create database: %s", err.Error())
 	}
 
 	return nil
 }
 
 func (d *Storage) CreateMission(ctx context.Context, mission *storage.Mission) error {
-	query := `insert into missions(text, deadline) values(?, ?)`
+	query := `insert into missions(id, text, deadline) values(?, ?, ?)`
 
-	_, err := d.db.ExecContext(ctx, query, mission.Text, mission.Deadline)
+	_, err := d.db.ExecContext(ctx, query, mission.Id, mission.Text, mission.Deadline.Format("2006-01-02 15:04:05"))
 	if err != nil {
-		return fmt.Errorf("Can't add row to a database: %s", err.Error())
+		return fmt.Errorf("can't add row to a database: %s", err.Error())
 	}
 
 	return nil
@@ -63,7 +63,7 @@ func (d *Storage) ReadLatestMissions(ctx context.Context) ([]storage.Mission, er
 	`
 	rows, err := d.db.QueryContext(ctx, query, time.Now().Format("2006-01-02 15:04:05"))
 	if err != nil {
-		return []storage.Mission{}, fmt.Errorf("Can't get rows from a database: %s", err.Error())
+		return []storage.Mission{}, fmt.Errorf("can't get rows from a database: %s", err.Error())
 	}
 
 	if err == sql.ErrNoRows {
@@ -71,7 +71,7 @@ func (d *Storage) ReadLatestMissions(ctx context.Context) ([]storage.Mission, er
 	}
 
 	for rows.Next() {
-		var id int
+		var id string
 		var text string
 		var deadline string
 
@@ -92,7 +92,7 @@ func (d *Storage) ReadLatestMissions(ctx context.Context) ([]storage.Mission, er
 	return buffer, nil
 }
 
-func (d *Storage) RemoveMission(ctx context.Context, id int) error {
+func (d *Storage) RemoveMission(ctx context.Context, id string) error {
 	query := `delete from missions where id = ?`
 
 	_, err := d.db.ExecContext(ctx, query, id)
