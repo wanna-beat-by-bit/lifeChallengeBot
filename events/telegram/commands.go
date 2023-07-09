@@ -1,27 +1,101 @@
 package telegram
 
 import (
+	"errors"
+	"fmt"
 	"log"
 	"strings"
+	tgClient "tgBot/clients/telegram"
+	ce "tgBot/pkg/customError"
+	storage "tgBot/storage"
+	"time"
+
+	"github.com/google/uuid"
 )
 
 // commands
 const (
-	StartCmd = "/start"
-	TestCmd  = "/test"
+	StartCmd = "/realStart"
+	TestCmd  = "проверка"
 )
+
+func NewSender(chatId int, client *tgClient.Client) func(string) error {
+	return func(text string) error {
+		return client.SendMessage(text, chatId)
+	}
+}
 
 func (p *Processor) doCmd(chatId int, username string, text string) error {
 	text = strings.TrimSpace(text)
 
 	log.Printf("[INF]: '%d', '%s', '%s'", chatId, username, text)
+
+	sendMessage := NewSender(chatId, p.tg)
+
+	if ok := isMission(text); ok {
+		mission, err := parseEventAndTime(text)
+		if err != nil {
+			return ce.Wrap("Error occured while parsing message", err)
+		}
+		mission.Id = uuid.New().String()
+
+		sendMessage(
+			fmt.Sprintf("Ваше задание было зарегистрировано 👌: '%s' '%s' [%s]",
+				mission.Id,
+				mission.Text,
+				mission.Deadline.Format("2006-01-02 15:04:05")),
+		)
+	}
+
 	switch text {
 	case StartCmd:
-		p.tg.SendMessage("Hello! Here i am testing bot!", chatId)
-		log.Println("[INF]: Sent message")
+		sendMessage("Hello! Here i am testing bot!")
+		log.Printf("[INF]: send '%d', '%s', '%s'", chatId, username, "message")
 	case TestCmd:
-		p.tg.SendMessage("You are testing me!", chatId)
+		message := "Тестирование бота"
+		sendMessage(message)
+		log.Printf("[INF]: send '%d', '%s', '%s'", chatId, username, message)
 	}
 
 	return nil
+}
+
+func parseEventAndTime(input string) (storage.Mission, error) {
+
+	eventStart := strings.Index(input, "event=")
+	if eventStart == -1 {
+		return storage.Mission{}, errors.New("event string not found in message")
+	}
+	eventStart += len("event=")
+
+	timeStart := strings.Index(input, "time=")
+	if timeStart == -1 {
+		return storage.Mission{}, errors.New("time string not found in message")
+	}
+	timeStart += len("time=")
+
+	eventEnd := timeStart - len("time=")
+	timeStr := input[timeStart:]
+
+	// Extract event text
+	event := strings.TrimSpace(input[eventStart:eventEnd])
+
+	// Parse time
+	parsedTime, err := time.Parse("2006-01-02 15:04:05", timeStr)
+	if err != nil {
+		return storage.Mission{}, errors.New("can't parse time from message's time string")
+	}
+
+	return storage.Mission{Text: event, Deadline: parsedTime}, nil
+}
+
+func isMission(input string) bool {
+	if !strings.Contains(input, "event=") {
+		return false
+	}
+	if !strings.Contains(input, "time=") {
+		return false
+	}
+	return true
+
 }
