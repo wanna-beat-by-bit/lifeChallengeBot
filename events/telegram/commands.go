@@ -1,13 +1,14 @@
 package telegram
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"log"
 	"strings"
 	tgClient "tgBot/clients/telegram"
 	ce "tgBot/pkg/customError"
-	storage "tgBot/storage"
+	store "tgBot/storage"
 	"time"
 
 	"github.com/google/uuid"
@@ -28,7 +29,7 @@ func NewSender(chatId int, client *tgClient.Client) func(string) error {
 func (p *Processor) doCmd(chatId int, username string, text string) error {
 	text = strings.TrimSpace(text)
 
-	log.Printf("[INF]: '%d', '%s', '%s'", chatId, username, text)
+	log.Printf("[INF]: Received '%d', '%s', '%s'", chatId, username, text)
 
 	sendMessage := NewSender(chatId, p.tg)
 
@@ -39,8 +40,10 @@ func (p *Processor) doCmd(chatId int, username string, text string) error {
 		}
 		mission.Id = uuid.New().String()
 
+		p.storage.CreateMission(context.Background(), &mission)
+
 		sendMessage(
-			fmt.Sprintf("Ваше задание было зарегистрировано 👌: '%s' '%s' [%s]",
+			fmt.Sprintf("Создано задание № %s 👌: '%s' [%s]",
 				mission.Id,
 				mission.Text,
 				mission.Deadline.Format("2006-01-02 15:04:05")),
@@ -60,17 +63,17 @@ func (p *Processor) doCmd(chatId int, username string, text string) error {
 	return nil
 }
 
-func parseEventAndTime(input string) (storage.Mission, error) {
+func parseEventAndTime(input string) (store.Mission, error) {
 
 	eventStart := strings.Index(input, "event=")
 	if eventStart == -1 {
-		return storage.Mission{}, errors.New("event string not found in message")
+		return store.Mission{}, errors.New("event string not found in message")
 	}
 	eventStart += len("event=")
 
 	timeStart := strings.Index(input, "time=")
 	if timeStart == -1 {
-		return storage.Mission{}, errors.New("time string not found in message")
+		return store.Mission{}, errors.New("time string not found in message")
 	}
 	timeStart += len("time=")
 
@@ -83,10 +86,10 @@ func parseEventAndTime(input string) (storage.Mission, error) {
 	// Parse time
 	parsedTime, err := time.Parse("2006-01-02 15:04:05", timeStr)
 	if err != nil {
-		return storage.Mission{}, errors.New("can't parse time from message's time string")
+		return store.Mission{}, errors.New("can't parse time from message's time string")
 	}
 
-	return storage.Mission{Text: event, Deadline: parsedTime}, nil
+	return store.Mission{Text: event, Deadline: parsedTime}, nil
 }
 
 func isMission(input string) bool {

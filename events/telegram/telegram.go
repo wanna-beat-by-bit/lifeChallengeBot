@@ -5,11 +5,13 @@ import (
 	tgClient "tgBot/clients/telegram"
 	ev "tgBot/events"
 	ce "tgBot/pkg/customError"
+	store "tgBot/storage"
 )
 
 type Processor struct {
-	tg     *tgClient.Client
-	offset int
+	tg      *tgClient.Client
+	offset  int
+	storage store.Storage
 }
 
 type Meta struct {
@@ -22,10 +24,11 @@ var (
 	ErrorUnknownEvent = errors.New("Error while validatig event type")
 )
 
-func NewProcessor(tg *tgClient.Client) *Processor {
+func NewProcessor(tg *tgClient.Client, storage store.Storage) *Processor {
 	return &Processor{
-		tg:     tg,
-		offset: 0,
+		tg:      tg,
+		offset:  0,
+		storage: storage,
 	}
 }
 
