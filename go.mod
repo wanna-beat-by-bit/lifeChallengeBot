@@ -1,4 +1,4 @@
-module tgBot
+module github.com/wanna-beat-by-bit/lifeChallengeBot
 
 go 1.20
 
