@@ -1,38 +1,21 @@
 package main
 
 import (
-	"context"
 	"flag"
+	"fmt"
 	"log"
-
-	tgClient "github.com/wanna-beat-by-bit/lifeChallengeBot/internals/app/clients/telegram"
-	consumer "github.com/wanna-beat-by-bit/lifeChallengeBot/internals/app/consumer"
-	tgProcessor "github.com/wanna-beat-by-bit/lifeChallengeBot/internals/app/events/telegram"
-	storeSqlite "github.com/wanna-beat-by-bit/lifeChallengeBot/internals/pkg/storage/sqlite"
-)
-
-const (
-	telegramHost = "api.telegram.org"
-	batchSize    = 10
 )
 
 // token: 5949295798:AAGuGBtl8_nHtyEWRZ_FWwB0375DJfg2LPs
 func main() {
 	token := mustToken()
+	fmt.Println("Provided token:", token)
+	//app := app.New(token)
+	//if err := app.Init(); err != nil {
+	//	log.Fatalf("Error whilce creating application: %s", err.Error())
+	//}
 
-	db, err := storeSqlite.NewStorage("test.db")
-	if err != nil {
-		log.Fatalf("Error while creating database: %s", err.Error())
-	}
-
-	db.Init(context.Background())
-
-	client := tgClient.NewClient(token, telegramHost)
-	processor := tgProcessor.NewProcessor(client, db)
-	consumer := consumer.NewConsumer(processor, processor, batchSize)
-
-	log.Println("Server started")
-	consumer.Consume()
+	//app.Run()
 }
 
 func mustToken() string {
