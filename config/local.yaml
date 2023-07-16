@@ -1,0 +1,2 @@
+env: "local" #local, dev, prod
+storage_path: "./test.db"

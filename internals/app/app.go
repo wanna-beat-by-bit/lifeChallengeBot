@@ -6,6 +6,7 @@ import (
 	"log"
 
 	tgClient "github.com/wanna-beat-by-bit/lifeChallengeBot/internals/app/clients/telegram"
+	"github.com/wanna-beat-by-bit/lifeChallengeBot/internals/app/config"
 	"github.com/wanna-beat-by-bit/lifeChallengeBot/internals/app/consumer"
 	tgProcessor "github.com/wanna-beat-by-bit/lifeChallengeBot/internals/app/events/telegram"
 	"github.com/wanna-beat-by-bit/lifeChallengeBot/internals/pkg/storage"
@@ -19,20 +20,24 @@ const (
 
 type App struct {
 	token     string
+	config    string
 	client    *tgClient.Client
 	consumer  *consumer.Consumer
 	processor *tgProcessor.Processor
 	storage   storage.Storage
 }
 
-func New(token string) *App {
+func New(token string, config string) *App {
 	return &App{
-		token: token,
+		token:  token,
+		config: config,
 	}
 }
 
 func (a *App) Init() error {
-	db, err := sqlite.NewStorage("test.db")
+	cfg := config.MustLoad(a.config)
+
+	db, err := sqlite.NewStorage(cfg.StoragePath)
 	if err != nil {
 		return fmt.Errorf("can't create a database: %s", err.Error())
 	}
