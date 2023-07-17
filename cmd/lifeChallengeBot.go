@@ -15,7 +15,7 @@ func main() {
 		log.Fatalf("Error whilce creating application: %s", err.Error())
 	}
 
-	//app.Run()
+	app.Run()
 }
 
 func mustArgs() (string, string) {
