@@ -1,7 +1,7 @@
 APP_PATH := ./cmd/lifeChallengeBot.go
 CONFIG_PATH := ./config/local.yaml
 
-build:
+build: 
 	go build $(APP_PATH)
 
 run:
